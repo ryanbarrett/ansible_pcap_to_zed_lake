@@ -1,0 +1,26 @@
+---
+server_name: tshark
+
+# Set your timezone if desired
+ntp_timezone: America/Chicago
+
+# Setup user
+ansible_user_name: Goal6280
+
+# This user will be set up as the system worker
+## view status with tmux:
+## sudo su - tshark_user && tmux attach-session
+
+
+# aux interface to set in promiscious mode
+listener_int: ens19
+
+### tshark settings ###
+# seconds 86400 = 1 day 3600 = 1 hour
+tshark_interval: 30
+# quantity of rotating files
+tshark_files: 9999
+# directory location of pcap files
+tshark_buffer_dir: /tshark
+
+tshark_options: "-i {{ listener_int }} -b interval:{{ tshark_interval }} -b files:{{ tshark_files }} -w {{ tshark_buffer_dir }}/trace.pcap"

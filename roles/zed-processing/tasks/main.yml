@@ -1,0 +1,177 @@
+---
+# tasks file for zed-processing
+- name: Create the zed processing directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ zed_processing_directory }}"
+    state: directory
+    owner: "{{ zed_worker_user }}"
+    group: "{{ pcap_access_group }}"
+    mode: '0770'
+- name: Create the zed processed directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ zed_processed_directory }}"
+    state: directory
+    owner: "{{ zed_worker_user }}"
+    group: "{{ pcap_access_group }}"
+    mode: '0770'
+- name: Create the zed processed directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ zed_loaded_directory }}"
+    state: directory
+    owner: "{{ zed_worker_user }}"
+    group: "{{ pcap_access_group }}"
+    mode: '0770'
+
+- name: set bash shell for cron
+  ansible.builtin.cron:
+    name: SHELL
+    user: "{{ zed_worker_user }}"
+    env: yes
+    job: /bin/bash
+
+- name: tmux for change group and permissions
+  ansible.builtin.cron:
+    name: launch zed lake server
+    user: root
+    special_time: reboot
+    job: tmux new-session -d -s zed_worker_session && 
+      tmux set-option -t zed_worker_session remain-on-exit on && 
+      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:1 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chgrp {{ pcap_access_group }} {} +;' &&
+      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:2 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chmod 660 {} +;'
+
+- name: tmux for change group and permissions
+  ansible.builtin.cron:
+    name: launch zed lake server
+    user: "{{ zed_worker_user }}"
+    special_time: reboot
+    job: tmux new-session -d -s zed_worker_session && 
+      tmux set-option -t zed_worker_session remain-on-exit on && 
+      tmux new-window -d -n 'zed_from_tshark' -t zed_worker_session:1 'watch -n 60 find {{ tshark_buffer_dir }} -type f -mmin 1 -name "*.pcap" | xargs -i mv -v {} {{ zed_processing_directory }} ' &&
+      tmux new-window -d -n 'brimcap_convert' -t zed_worker_session:2 'watch -n 60 find {{ zed_processing_directory }} -type f -name "*.pcap" | xargs -i brimcap analyze -o {}.zng {}  xargs -i mv {} {{ zed_processed_directory}}' &&
+      tmux new-window -d -n 'zed_lake_import' -t zed_worker_session:3 'watch -n 60 find {{ zed_processed_directory }} -type f -mmin 1 -name "*.zng" -exec zed load -use pcap {} && xargs -i mv {} {{ zed_loaded_directory }}'
+
+
+### Maybe a way to run the zed lake import in the background and not have to use tmux ###
+# - name: cron job to find pcap files older than 30 seconds and change the group and permissions
+  # ansible.builtin.cron:
+  #   name: "change group of pcap files"
+  #   minute: "*"
+  #   hour: "*"
+  #   day: "*"
+  #   month: "*"
+  #   weekday: "*"
+  #   job: "find {{ tshark_buffer_dir }} -type f -name '*.pcap' -mmin +0.6 -exec chgrp {{ pcap_access_group }} {} && chmod g+rw {} \\;"
+  #   user: root
+  #   state: present
+
+# - name: cron job to find and move pcap files older than 1 minutes to the zed processing directory
+#   ansible.builtin.cron:
+#     name: "find pcap files older than 1 minute"
+#     minute: "*"
+#     hour: "*"
+#     day: "*"
+#     month: "*"
+#     weekday: "*"
+#     job: "find {{ tshark_buffer_dir }} -type f -mmin 1.1 -name '*.pcap' -exec mv {} {{ zed_processing_directory }} \\;"
+#     user: "{{ zed_worker_user }}"
+#     cron_file: zed_processing_cron
+#     state: present
+
+# - name: cron job to process pcap files with brimcap and move them to the zed processed directory
+#   ansible.builtin.cron:
+#     name: "process pcap files with brimcap"
+#     minute: "*"
+#     hour: "*"
+#     day: "*"
+#     month: "*"
+#     weekday: "*"
+#     job: "find {{ zed_processing_directory }} -type f -name '*.pcap' -exec brimcap analyze -o {}.zng {} && mv {} {{ zed_processed_directory}} \\;"
+#     user: "{{ zed_worker_user }}"
+#     cron_file: zed_processing_cron
+#     state: present
+
+# - name: cron to import files to the zed lake with zed load -use pcap {}
+#   ansible.builtin.cron:
+#     name: "import files to the zed lake"
+#     minute: "*"
+#     hour: "*"
+#     day: "*"
+#     month: "*"
+#     weekday: "*"
+#     job: "find {{ zed_processed_directory }} -type f -mmin 1 -name '*.zng' -exec zed load -use pcap {} \\;"
+#     user: "{{ zed_worker_user }}"
+#     cron_file: zed_processing_cron
+#     state: present
+#   with_items: "{{ zed_lake_path }}"
+
+
+#### Tested a way to process with ansible. Not the solution I want but it "worked" ####
+# - name: find pcap files older than one minute
+#   ansible.builtin.find:
+#     paths: "{{ tshark_buffer_dir }}"
+#     age: 31
+#     age_stamp: mtime
+#     file_type: file
+#     patterns: "*.pcap"
+#     recurse: yes
+#   register: pcap_files
+
+# - name: change permissions on pcap files to allow for processing
+#   ansible.builtin.file:
+#     path: "{{ item.path }}"
+#     group: "{{ pcap_access_group }}"
+#     mode: '0660'
+#   loop: "{{ pcap_files.files }}"
+
+# - name: move pcap files to zed_processing_directory
+#   ansible.builtin.copy:
+#     src: "{{ item.path }}"
+#     dest: "{{ zed_processing_directory }}"
+#     remote_src: yes
+#   with_items: "{{ pcap_files.files }}"
+#   register: pcap_files_copied
+
+# - name: Remove pcap files from tshark_buffer_dir
+#   ansible.builtin.file:
+#     path: "{{ item.src }}"
+#     state: absent
+#   with_items: "{{ pcap_files_copied.results }}"
+#   when: pcap_files_copied is defined
+
+
+# - name: find pcap files in zed_processing_directory
+#   ansible.builtin.find:
+#     paths: "{{ zed_processing_directory }}"
+#     file_type: file
+#     patterns: "*.pcap"
+#     recurse: yes
+#   register: pcap_files_processing
+
+# - name: list pcap files in zed_processing_directory
+#   ansible.builtin.debug:
+#     msg: "{{ item.path }}"
+#   loop: "{{ pcap_files_processing.files }}"
+
+# - name: Create zng files with brimcap
+#   ansible.builtin.command: "{{ brimcap_path }}/brimcap analyze -o {{ item.path }}.zng {{ item.path }}"
+#   register: brimcap_analyzed
+#   with_items: "{{ pcap_files_processing.files }}"
+#   when: pcap_files_processing is defined
+
+# - name: move analyzed pcap files to zed_processed_directory
+#   ansible.builtin.command: "mv -v {{ item.path }} {{ zed_processed_directory }}"
+#   with_items: "{{ pcap_files_processing.files }}"
+#   register: pcap_files_moved
+
+# - name: find zng files ready to be loaded into zed lake
+#   ansible.builtin.find:
+#     paths: "{{ zed_processing_directory }}"
+#     file_type: file
+#     patterns: "*.zng"
+#     recurse: yes
+#   register: zng_found
+
+# - name: import zng files to the zed_lake
+#   ansible.builtin.command: "zed load -use pcap {{ item.path }}"
+#   with_items: "{{ zng_found.files }}"
+#   when: zng_found is defined

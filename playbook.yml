@@ -1,0 +1,19 @@
+---
+- hosts: all
+  remote_user: "{{ ansible_user_name }}"
+  become: yes
+  vars_files:
+    - vars/main.yml
+
+  roles:
+  #- geerlingguy.ntp
+  #- tshark-listener
+  #- zed
+  #- zed-server
+  - zed-processing
+
+  tasks:
+  - name: Set the hostname
+    ansible.builtin.hostname:
+      name: "{{ server_name }}"
+  

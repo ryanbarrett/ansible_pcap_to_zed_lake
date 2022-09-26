@@ -1,0 +1,7 @@
+#!/bin/bash
+
+ip link set {{ tshark_listener_int }} promisc on
+ip link set {{ tshark_listener_int }} up
+
+
+exit 0

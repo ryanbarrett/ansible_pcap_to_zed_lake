@@ -1,0 +1,66 @@
+---
+# tasks file for tshark-listener
+- name: install packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - tshark
+  - tmux
+  # https://packetlife.net/blog/2010/mar/19/sniffing-wireshark-non-root-user/
+- name: create group tshark for dumpcap access
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ pcap_access_group }}"
+    - tshark
+- name: add user to tshark group
+  ansible.builtin.user:
+    name: "{{ tshark_user_name }}"
+    groups: "{{ pcap_access_group }}, tshark"
+    shell: /bin/bash
+    state: present
+- name: set group for dumpcap
+  ansible.builtin.file:
+    path: /usr/bin/dumpcap
+    mode: '0750'
+    group: tshark
+- name: set capabilities of dumpcap
+  ansible.builtin.command:
+    cmd: setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
+# Unable to get this to work.
+# - name: set capabilities of dumpcap
+#   capabilities:
+#     path: /usr/bin/dumpcap
+#     capability: "{{ item }}"
+#     state: present
+#   with_items:
+#   - cap_net_raw+eip
+#   - cap_net_admin+eip
+- name: Create work directory for tshark buffer files.
+  ansible.builtin.file:
+    path: "{{ tshark_buffer_dir }}"
+    owner: "{{ tshark_user_name }}"
+    group: "{{ pcap_access_group }}"
+    mode: '0770'
+    state: directory
+- name: install rc.local template to start capture on reboot
+  ansible.builtin.template:
+    src: ./templates/rc.local.j2
+    dest: /etc/rc.local
+    mode: '0755'
+    owner: root 
+    group: root
+- name: set bash shell for cron
+  ansible.builtin.cron:
+    name: SHELL
+    user: "{{ tshark_user_name }}"
+    env: yes
+    job: /bin/bash
+- name: launch tmux session ~ tmux attach-session
+  ansible.builtin.cron:
+    name: launch tmux session for user
+    user: "{{ tshark_user_name }}"
+    special_time: reboot
+    job: tmux new-session -d -s tshark && tmux set-option -t tshark remain-on-exit on && tmux new-window -d -n 'tsharkCapture' -t tshark:1 'tshark {{ tshark_options }}'

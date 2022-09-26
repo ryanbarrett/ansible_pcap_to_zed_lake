@@ -1,0 +1,60 @@
+---
+# tasks file for zed-server
+- name: add zed lake group
+  ansible.builtin.group:
+    name: "{{ zed_lake_group }}"
+    state: present
+  with_items: 
+    - "{{ zed_lake_group }}"
+    - "{{ zed_users_group }}"
+- name: add user to tshark group
+  ansible.builtin.user:
+    name: "{{ zed_server_user }}"
+    groups: "{{ zed_lake_group }}, {{ zed_users_group }}"
+    shell: /bin/bash
+    state: present
+
+- name: Create the zed lake directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ zed_lake_path }}"
+    state: directory
+    owner: "{{ zed_server_user }}"
+    group: "{{ zed_lake_group }}"
+    mode: '0760'
+
+
+- name: install packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - tmux
+
+- name: if zed lake directory is empty, initialize zed lake
+  ansible.builtin.command: zed init {{ zed_lake_path }}
+  args:
+    creates: "{{ zed_lake_path }}/lake.zng"
+
+- name: if pcap_pool_created does not exist in zed lake, create it
+  ansible.builtin.command: zed -lake {{ zed_lake_path }} create pcap
+  args:
+    creates: "{{ zed_lake_path }}/pcap_pool_created"
+
+- name: create file in zed lake
+  ansible.builtin.command: touch {{ zed_lake_path }}/pcap_pool_created
+  args:
+    creates: "{{ zed_lake_path }}/pcap_pool_created"
+
+- name: set bash shell for cron
+  ansible.builtin.cron:
+    name: SHELL
+    user: "{{ zed_server_user }}"
+    env: yes
+    job: /bin/bash
+
+- name: launch zed lake server
+  ansible.builtin.cron:
+    name: launch zed lake server
+    user: "{{ zed_server_user }}"
+    special_time: reboot
+    job: tmux new-session -d -s zed_lake && tmux set-option -t zed_lake remain-on-exit on && tmux new-window -d -n 'zed_lake_server' -t zed_lake:1 'zed serve -lake {{ zed_lake_path }}'

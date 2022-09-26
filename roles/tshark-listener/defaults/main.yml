@@ -1,0 +1,19 @@
+---
+# defaults file for tshark-listener
+## view status with tmux:
+## sudo su - tshark_user && tmux attach-session
+tshark_user_name: tshark_user
+pcap_access_group: pcap_access
+
+# aux interface to set in promiscious mode
+tshark_listener_int: ens19
+
+### tshark settings ###
+# seconds 86400 = 1 day 3600 = 1 hour
+tshark_interval: 86400
+# quantity of rotating files
+tshark_files: 7
+# directory location of pcap files
+tshark_buffer_dir: /tshark
+
+tshark_options: "-i {{ listener_int }} -b interval:{{ tshark_interval }} -b files:{{ tshark_files }} -w {{ tshark_buffer_dir }}/trace.pcap"

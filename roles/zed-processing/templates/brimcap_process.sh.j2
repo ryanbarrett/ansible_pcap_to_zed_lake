@@ -1,0 +1,4 @@
+find {{ zed_processing_directory }} -type f -name "*.pcap" > /tmp/brimcap_pcap_files.txt
+xargs -a /tmp/brimcap_pcap_files.txt -I {} brimcap analyze -o {}.zng {} && \
+xargs -a /tmp/brimcap_pcap_files.txt -I {} mv {} {{ zed_processed_directory}}
+rm /tmp/brimcap_pcap_files.txt
