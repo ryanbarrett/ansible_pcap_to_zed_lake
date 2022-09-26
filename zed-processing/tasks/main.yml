@@ -1,26 +1,30 @@
 ---
 # tasks file for zed-processing
-- name: Create the zed processing directory if it does not exist
+
+- name: create zed worker directories
   ansible.builtin.file:
-    path: "{{ zed_processing_directory }}"
+    path: "{{ item }}"
     state: directory
     owner: "{{ zed_worker_user }}"
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_users_group }}"
     mode: '0770'
-- name: Create the zed processed directory if it does not exist
-  ansible.builtin.file:
-    path: "{{ zed_processed_directory }}"
-    state: directory
+  with_items:
+    - "{{ zed_processed_directory }}"
+    - "{{ zed_processing_directory }}"
+    - "{{ zed_loaded_directory }}"
+    - "{{ zed_scripts_path }}"
+
+- name: install processing template scripts
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ zed_scripts_path }}/{{ item }}"
     owner: "{{ zed_worker_user }}"
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_users_group }}"
     mode: '0770'
-- name: Create the zed processed directory if it does not exist
-  ansible.builtin.file:
-    path: "{{ zed_loaded_directory }}"
-    state: directory
-    owner: "{{ zed_worker_user }}"
-    group: "{{ pcap_access_group }}"
-    mode: '0770'
+  with_items:
+    - tshark_to_processing.sh
+    - brimcap_process.sh
+    - lake_import.sh
 
 - name: set bash shell for cron
   ansible.builtin.cron:
@@ -46,9 +50,12 @@
     special_time: reboot
     job: tmux new-session -d -s zed_worker_session && 
       tmux set-option -t zed_worker_session remain-on-exit on && 
-      tmux new-window -d -n 'zed_from_tshark' -t zed_worker_session:1 'watch -n 60 find {{ tshark_buffer_dir }} -type f -mmin 1 -name "*.pcap" | xargs -i mv -v {} {{ zed_processing_directory }} ' &&
-      tmux new-window -d -n 'brimcap_convert' -t zed_worker_session:2 'watch -n 60 find {{ zed_processing_directory }} -type f -name "*.pcap" | xargs -i brimcap analyze -o {}.zng {}  xargs -i mv {} {{ zed_processed_directory}}' &&
-      tmux new-window -d -n 'zed_lake_import' -t zed_worker_session:3 'watch -n 60 find {{ zed_processed_directory }} -type f -mmin 1 -name "*.zng" -exec zed load -use pcap {} && xargs -i mv {} {{ zed_loaded_directory }}'
+      tmux new-window -d -n 'tshark_to_processing' -t zed_worker_session:1 'watch -n 60 {{ zed_scripts_path }}/tshark_to_processing.sh' &&
+      tmux new-window -d -n 'brimcap_process' -t zed_worker_session:2 'watch -n 60 {{ zed_scripts_path }}/brimcap_process.sh' &&
+      tmux new-window -d -n 'lake_import' -t zed_worker_session:3 'watch -n 60 {{ zed_scripts_path }}/lake_import.sh'
+      #tmux new-window -d -n 'zed_from_tshark' -t zed_worker_session:1 'watch -n 60 find {{ tshark_buffer_dir }} -type f -mmin 1 -name "*.pcap" | xargs -i mv -v {} {{ zed_processing_directory }} ' &&
+      #tmux new-window -d -n 'brimcap_convert' -t zed_worker_session:2 'watch -n 60 find {{ zed_processing_directory }} -type f -name "*.pcap" | xargs -i brimcap analyze -o {}.zng {}  xargs -i mv {} {{ zed_processed_directory}}' &&
+      #tmux new-window -d -n 'zed_lake_import' -t zed_worker_session:3 'watch -n 60 find {{ zed_processed_directory }} -type f -mmin 1 -name "*.zng" -exec zed load -use pcap {} && xargs -i mv {} {{ zed_loaded_directory }}'
 
 
 ### Maybe a way to run the zed lake import in the background and not have to use tmux ###

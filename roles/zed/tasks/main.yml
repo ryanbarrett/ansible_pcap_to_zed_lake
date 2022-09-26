@@ -5,7 +5,6 @@
     name: "{{ item }}"
     state: present
   with_items: 
-    - "{{ zed_lake_group }}"
     - "{{ zed_users_group }}"
     - "{{ pcap_access_group }}"
 - name: add user to groups

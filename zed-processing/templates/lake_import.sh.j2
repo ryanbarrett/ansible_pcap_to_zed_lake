@@ -1,0 +1,15 @@
+# find zng files in zed_processed_directory and output path to temp file.
+find {{ zed_processing_directory }} -type f -mmin +1 -name "*.zng" > /tmp/zed_import_files.txt
+
+for zng_file in $(cat /tmp/
+
+
+
+
+# read temp file line by line and process each file. Then move file to zed_loaded_directory
+xargs -a /tmp/zed_import_files.txt -I {} zed load -use {{ zed_lake }} {} && \
+xargs -a /tmp/zed_import_files.txt -I {} mv -v {} {{ zed_loaded_directory }}
+
+# remove temp file
+rm /tmp/zed_import_files.txt
+echo $(date) "Zed Processed Files Loaded to {{zed_lake }}"
