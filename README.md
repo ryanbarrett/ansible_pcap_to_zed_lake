@@ -13,7 +13,7 @@ On reboot a tmux session will be launched with the user you specify as the "tsha
 
 This will begin capturing packets to your "tshark_buffer_dir".
 
-Every 1 min files will be loaded into a zed lake...
+Every 1-2 minutes the pcap files will be converted and loaded into a zed lake...
 
 
 ## Requirements

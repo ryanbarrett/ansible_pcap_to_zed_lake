@@ -8,7 +8,7 @@
   roles:
   #- geerlingguy.ntp
   #- tshark-listener
-  #- zed
+  - zed
   #- zed-server
   - zed-processing
 

@@ -86,12 +86,22 @@
     group: "{{ pcap_access_group }}"
     mode: '0755'
 
+- name: Change permissions for brimcap path suricata
+  ansible.builtin.file:
+    path: "{{ brimcap_path }}/suricata"
+    state: directory
+    recurse: yes
+    owner: root
+    group: "{{ pcap_access_group }}"
+    mode: '0775'
+
 - name: Create a symbolic link for suricata
   ansible.builtin.file:
     src: "{{ brimcap_path }}/suricata"
     dest: /home/runner/suricata
     group: "{{ pcap_access_group }}"
     state: link
+
 
 - name: Create a symbolic link for zeek
   ansible.builtin.file:
