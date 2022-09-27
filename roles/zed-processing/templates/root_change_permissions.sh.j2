@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# find pcap files in the tshark buffer directory and change permissions to allow zed_users_group to read them.
+# repeat this process every 10 seconds for one minute.
+
+echo $(date) "Starting pcap permissions change in {{ tshark_buffer_dir }}"
+TEMPFILE=$(mktemp)
+while $LOOP < 6; do
+    find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > $TEMPFILE
+    for pcap_file in $(cat $TEMPFILE) ; do
+        chgrp -v {{ zed_users_group }} $pcap_file
+        chmod -v g+r $pcap_file
+    done
+    sleep 10
+    LOOP=$((LOOP+1))
+done
+rm -vf $TEMPFILE
+echo $(date) "Run Completed"

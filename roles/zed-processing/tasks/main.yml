@@ -22,9 +22,17 @@
     group: "{{ zed_users_group }}"
     mode: '0770'
   with_items:
-    - tshark_to_processing.sh
-    - brimcap_process.sh
-    - lake_import.sh
+    - process_files.sh
+
+- name: install permissions template scripts
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ zed_scripts_path }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0770'
+  with_items:
+    - root_change_permissions.sh
 
 - name: set bash shell for cron
   ansible.builtin.cron:
@@ -33,30 +41,49 @@
     env: yes
     job: /bin/bash
 
-- name: tmux for change group and permissions
+# - name: tmux for change group and permissions
+#   ansible.builtin.cron:
+#     name: launch zed lake server
+#     user: root
+#     special_time: reboot
+#     job: tmux new-session -d -s zed_worker_session && 
+#       tmux set-option -t zed_worker_session remain-on-exit on && 
+#       tmux new-window -d -n 'zed_permissions' -t zed_worker_session:1 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chgrp {{ pcap_access_group }} {} +;' &&
+#       tmux new-window -d -n 'zed_permissions' -t zed_worker_session:2 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chmod 660 {} +;' &&
+#       tmux new-window -d -n 'zed_permissions' -t zed_worker_session:3 'watch -n 5 chown -R {{ zed_server_user }}:{{ zed_lake_group }} {{ zed_lake_path }}'
+- name: set bash shell for cron
   ansible.builtin.cron:
-    name: launch zed lake server
+    name: SHELL
     user: root
-    special_time: reboot
-    job: tmux new-session -d -s zed_worker_session && 
-      tmux set-option -t zed_worker_session remain-on-exit on && 
-      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:1 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chgrp {{ pcap_access_group }} {} +;' &&
-      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:2 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chmod 660 {} +;' &&
-      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:3 'watch -n 5 chown -R {{ zed_server_user }}:{{ zed_lake_group }} {{ zed_lake_path }}'
-
-- name: tmux for change group and permissions
+    env: yes
+    job: /bin/bash
+- name: root cron job to change permissions for tshark pcap files
   ansible.builtin.cron:
-    name: launch zed lake server
+    name: change permissions for tshark pcap files
+    user: root
+    minute: '*'
+    job: "{{ zed_scripts_path }}/root_change_permissions.sh >> /var/log/zed/change_permissions-$(date +%u).log 2>&1"
+
+# - name: tmux for change group and permissions
+#   ansible.builtin.cron:
+#     name: launch zed lake server
+#     user: "{{ zed_worker_user }}"
+#     special_time: reboot
+#     job: tmux new-session -d -s zed_worker_session && 
+#       tmux set-option -t zed_worker_session remain-on-exit on && 
+#       tmux new-window -d -n 'tshark_to_processing' -t zed_worker_session:1 'watch -n 60 {{ zed_scripts_path }}/tshark_to_processing.sh' &&
+#       tmux new-window -d -n 'brimcap_process' -t zed_worker_session:2 'watch -n 60 {{ zed_scripts_path }}/brimcap_process.sh' &&
+#       tmux new-window -d -n 'lake_import' -t zed_worker_session:3 'watch -n 60 {{ zed_scripts_path }}/lake_import.sh'
+#       #tmux new-window -d -n 'zed_from_tshark' -t zed_worker_session:1 'watch -n 60 find {{ tshark_buffer_dir }} -type f -mmin 1 -name "*.pcap" | xargs -i mv -v {} {{ zed_processing_directory }} ' &&
+#       #tmux new-window -d -n 'brimcap_convert' -t zed_worker_session:2 'watch -n 60 find {{ zed_processing_directory }} -type f -name "*.pcap" | xargs -i brimcap analyze -o {}.zng {}  xargs -i mv {} {{ zed_processed_directory}}' &&
+#       #tmux new-window -d -n 'zed_lake_import' -t zed_worker_session:3 'watch -n 60 find {{ zed_processed_directory }} -type f -mmin 1 -name "*.zng" -exec zed load -use pcap {} && xargs -i mv {} {{ zed_loaded_directory }}'
+- name: cron job to process files every minute 
+  ansible.builtin.cron:
+    name: process files every minute
     user: "{{ zed_worker_user }}"
-    special_time: reboot
-    job: tmux new-session -d -s zed_worker_session && 
-      tmux set-option -t zed_worker_session remain-on-exit on && 
-      tmux new-window -d -n 'tshark_to_processing' -t zed_worker_session:1 'watch -n 60 {{ zed_scripts_path }}/tshark_to_processing.sh' &&
-      tmux new-window -d -n 'brimcap_process' -t zed_worker_session:2 'watch -n 60 {{ zed_scripts_path }}/brimcap_process.sh' &&
-      tmux new-window -d -n 'lake_import' -t zed_worker_session:3 'watch -n 60 {{ zed_scripts_path }}/lake_import.sh'
-      #tmux new-window -d -n 'zed_from_tshark' -t zed_worker_session:1 'watch -n 60 find {{ tshark_buffer_dir }} -type f -mmin 1 -name "*.pcap" | xargs -i mv -v {} {{ zed_processing_directory }} ' &&
-      #tmux new-window -d -n 'brimcap_convert' -t zed_worker_session:2 'watch -n 60 find {{ zed_processing_directory }} -type f -name "*.pcap" | xargs -i brimcap analyze -o {}.zng {}  xargs -i mv {} {{ zed_processed_directory}}' &&
-      #tmux new-window -d -n 'zed_lake_import' -t zed_worker_session:3 'watch -n 60 find {{ zed_processed_directory }} -type f -mmin 1 -name "*.zng" -exec zed load -use pcap {} && xargs -i mv {} {{ zed_loaded_directory }}'
+    minute: '*'
+    job: "{{ zed_scripts_path }}/process_files.sh >> /home/{{ zed_worker_user }}/zed_processing-$(date +%u).log 2>&1"
+
 - name: cron job every 8 hours for suricata Update
   ansible.builtin.cron:
     name: suricata update

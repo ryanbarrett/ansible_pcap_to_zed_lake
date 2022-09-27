@@ -1,0 +1,42 @@
+#!/bin/bash
+# find pcap files in the tshark buffer directory and move them to the zed processing directory.
+echo $(date) "Starting pcap move from {{ tshark_buffer_dir }} to {{ zed_processing_directory }}"
+TEMPFILE=$(mktemp)
+echo "Starting pcap move... $TEMPFILE"
+find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > $TEMPFILE
+for pcap_file in $(cat $TEMPFILE) ; do
+    echo "Processing $pcap_file"
+    mv -v $pcap_file {{ zed_processing_directory }}
+done
+
+rm -vf $TEMPFILE
+echo $(date) "Moved files from {{ tshark_buffer_dir }} to {{ zed_processing_directory }}"
+
+
+# Process pcap files into zng files with brimcap
+echo $(date) "Starting brimcap processing"
+TEMPFILE=$(mktemp)
+find {{ zed_processing_directory }} -type f -name "*.pcap" > $TEMPFILE
+
+for pcap_file in $(cat $TEMPFILE); do
+    echo "Processing $pcap_file"
+    brimcap analyze -o $pcap_file.zng $pcap_file
+    mv -v $pcap_file {{ zed_processed_directory }}
+done
+
+rm -vf $TEMPFILE
+echo $(date) "Finished processing pcap files with brimcap"
+
+
+# find zng files in zed_processed_directory and import to the lake
+echo $(date) "Starting Zed Processed Files Load to {{ zed_pool }}"
+TEMPFILE=$(mktemp)
+find {{ zed_processing_directory }} -type f -mmin +1 -name "*.zng" > $TEMPFILE
+
+for zng_file in $(cat $TEMPFILE); do
+    zed load -use {{ zed_pool }} $zng_file
+    mv -v $zng_file {{ zed_loaded_directory }}
+done
+
+rm -vf $TEMPFILE
+echo $(date) "Zed Processed Files Loaded to {{ zed_pool }}"

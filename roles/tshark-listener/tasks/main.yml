@@ -58,9 +58,23 @@
     user: "{{ tshark_user_name }}"
     env: yes
     job: /bin/bash
-- name: launch tmux session ~ tmux attach-session
+# - name: launch tmux session ~ tmux attach-session
+#   ansible.builtin.cron:
+#     name: launch tmux session for user
+#     user: "{{ tshark_user_name }}"
+#     special_time: reboot
+#     job: tmux new-session -d -s tshark && tmux set-option -t tshark remain-on-exit on && tmux new-window -d -n 'tsharkCapture' -t tshark:1 'tshark {{ tshark_options }}'
+
+- name: install tshark_watchdog.sh
+  ansible.builtin.template:
+    src: tshark_watchdog.sh.j2
+    dest: "{{tshark_watchdog_script}}"
+    mode: '0770'
+    owner: "{{ tshark_user_name }}" 
+    group: "{{ tshark_user_name }}"
+- name: crontab run tshark_watchdog.sh every minute
   ansible.builtin.cron:
-    name: launch tmux session for user
+    name: tshark_watchdog.sh
     user: "{{ tshark_user_name }}"
-    special_time: reboot
-    job: tmux new-session -d -s tshark && tmux set-option -t tshark remain-on-exit on && tmux new-window -d -n 'tsharkCapture' -t tshark:1 'tshark {{ tshark_options }}'
+    minute: '*'
+    job: "{{ tshark_watchdog_script }}"

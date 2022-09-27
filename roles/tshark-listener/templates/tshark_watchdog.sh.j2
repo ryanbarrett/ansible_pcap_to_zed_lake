@@ -1,0 +1,12 @@
+#!/bin/bash
+
+watchdog_process="tshark {{ tshark_options }}"
+
+if ps ax | grep -v grep | grep $watchdog_process > /dev/null
+then
+    exit
+else
+    $watchdog_process &
+fi
+
+exit
