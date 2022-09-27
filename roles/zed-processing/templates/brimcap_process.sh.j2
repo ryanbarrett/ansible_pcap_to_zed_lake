@@ -1,9 +1,12 @@
-find {{ zed_processing_directory }} -type f -name "*.pcap" > /tmp/brimcap_pcap_files.txt
+#!/bin/bash
+TEMPFILE=$(mktemp)
+find {{ zed_processing_directory }} -type f -name "*.pcap" > $TEMPFILE
 
-for pcap_file in $(cat /tmp/brimcap_pcap_files.txt); do
-echo "Processing $pcap_file"
-brimcap analyze -o $pcap_file.zng $pcap_file
-mv -v $pcap_file {{ zed_processed_directory }}
+for pcap_file in $(cat $TEMPFILE); do
+    echo "Processing $pcap_file"
+    brimcap analyze -o $pcap_file.zng $pcap_file
+    mv -v $pcap_file {{ zed_processed_directory }}
 done
-rm /tmp/brimcap_pcap_files.txt
+
+rm -v $TEMPFILE
 echo $(date) "Finished processing pcap files"

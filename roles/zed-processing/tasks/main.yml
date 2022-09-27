@@ -41,7 +41,8 @@
     job: tmux new-session -d -s zed_worker_session && 
       tmux set-option -t zed_worker_session remain-on-exit on && 
       tmux new-window -d -n 'zed_permissions' -t zed_worker_session:1 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chgrp {{ pcap_access_group }} {} +;' &&
-      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:2 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chmod 660 {} +;'
+      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:2 'watch -n 5 find {{ tshark_buffer_dir }} -type f -name "*.pcap" -mmin +0.6 -exec chmod 660 {} +;' &&
+      tmux new-window -d -n 'zed_permissions' -t zed_worker_session:3 'watch -n 5 chown -R {{ zed_server_user }}:{{ zed_lake_group }} {{ zed_lake_path }}'
 
 - name: tmux for change group and permissions
   ansible.builtin.cron:

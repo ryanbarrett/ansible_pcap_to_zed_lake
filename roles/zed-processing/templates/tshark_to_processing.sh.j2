@@ -1,4 +1,11 @@
-find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > /tmp/tshark_buffer_files.txt
-xargs -a /tmp/tshark_buffer_files.txt -I{} mv -v {} {{ zed_processing_directory }}
-rm -f /tmp/tshark_buffer_files.txt
+#!/bin/bash
+TEMPFILE=$(mktemp)
+echo "Starting pcap move... $TEMPFILE"
+find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > $TEMPFILE
+for pcap_file in $(cat $TEMPFILE) ; do
+    echo "Processing $pcap_file"
+    mv -v $pcap_file {{ zed_processing_directory }}
+done
+
+rm -vf $TEMPFILE
 echo "$(date) - Moved files to {{ zed_processing_directory }}"

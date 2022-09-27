@@ -18,6 +18,7 @@
   ansible.builtin.file:
     path: "{{ zed_lake_path }}"
     state: directory
+    recurse: yes
     owner: "{{ zed_server_user }}"
     group: "{{ zed_lake_group }}"
     mode: '0760'

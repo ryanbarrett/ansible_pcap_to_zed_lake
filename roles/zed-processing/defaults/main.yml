@@ -6,8 +6,9 @@ zed_worker_user: zed_worker
 pcap_access_group: pcap_access
 zed_lake_group: zed_lake
 zed_users_group: zed_users
+zed_server_user: zed_server
 
-zed_lake: pcap
+zed_pool: pcap
 zed_lake_path: /zed/lake
 zed_scripts_path: /zed/scripts
 zed_processing_directory: /zed/processing
