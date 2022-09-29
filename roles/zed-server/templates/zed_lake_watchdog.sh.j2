@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-process="zed serve -lake {{ zed_lake_path }}"
+process="zed serve -l {{ zed_ip_address }}:{{ zed_port }} -lake {{ zed_lake_path }}"
 PIDFILE=/tmp/zed_lake.pid
 if [ x"$1" = x-daemon ]; then
   if test -f "$PIDFILE"; then exit; fi

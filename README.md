@@ -11,6 +11,11 @@ This port will be set in promisc mode. (provided by /etc/rc.local)
 
 Every 1-2 minutes the pcap files will be converted and loaded into a zed lake...
 
+Tunnel in with something like:
+ ssh -L 9999:localhost:9867 username@192.168.1.xx
+
+point your brim lake connection at http://127.0.0.1:9999
+
 
 ## Requirements
 Ubuntu 22.04, I'm running in a cloud image on proxmox. *See the Disclaimer below

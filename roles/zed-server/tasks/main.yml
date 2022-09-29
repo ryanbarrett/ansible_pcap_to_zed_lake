@@ -21,7 +21,7 @@
     recurse: yes
     owner: "{{ zed_lake_user }}"
     group: "{{ zed_lake_group }}"
-    mode: '0760'
+    mode: '0770'
 - name: create zed lake script directories
   ansible.builtin.file:
     path: "{{ item }}"
@@ -43,16 +43,19 @@
 
 - name: if zed lake directory is empty, initialize zed lake
   ansible.builtin.command: zed init {{ zed_lake_path }}
+  become_user: "{{ zed_lake_user }}"
   args:
     creates: "{{ zed_lake_path }}/lake.zng"
 
 - name: if pcap_pool_created does not exist in zed lake, create it
-  ansible.builtin.command: zed -lake {{ zed_lake_path }} create pcap
+  ansible.builtin.command: zed -lake {{ zed_lake_path }} create {{ zed_pool }}
+  become_user: "{{ zed_lake_user }}"
   args:
     creates: "{{ zed_lake_path }}/pcap_pool_created"
 
 - name: create file in zed lake
   ansible.builtin.command: touch {{ zed_lake_path }}/pcap_pool_created
+  become_user: "{{ zed_lake_user }}"
   args:
     creates: "{{ zed_lake_path }}/pcap_pool_created"
 
