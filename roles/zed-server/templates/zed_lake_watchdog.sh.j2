@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-process="tshark {{ tshark_options }}"
-PIDFILE=/tmp/tshark.pid
+process="zed serve -lake {{ zed_lake_path }}"
+PIDFILE=/tmp/zed_lake.pid
 if [ x"$1" = x-daemon ]; then
   if test -f "$PIDFILE"; then exit; fi
   echo $$ > "$PIDFILE"

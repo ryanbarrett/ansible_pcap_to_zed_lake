@@ -3,7 +3,7 @@
 
 zed_ip_address: 127.0.0.1
 zed_port: 9867
-zed_server_user: zed_server
+zed_lake_user: zed_server
 zed_lake_group: zed_lake
-zed_users_group: zed_users
 zed_lake_path: /zed/lake
+zed_lake_scripts_path: /zed/lake/scripts

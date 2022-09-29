@@ -3,7 +3,7 @@
 ## view status with tmux:
 ## sudo su - tshark_user && tmux attach-session
 tshark_user_name: tshark_user
-pcap_access_group: pcap_access
+zed_worker_group: zed_worker
 
 # aux interface to set in promiscious mode
 tshark_listener_int: ens19

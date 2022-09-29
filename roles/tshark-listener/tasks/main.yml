@@ -13,12 +13,13 @@
     name: "{{ item }}"
     state: present
   with_items:
-    - "{{ pcap_access_group }}"
+    - "{{ zed_worker_group }}"
     - tshark
 - name: add user to tshark group
   ansible.builtin.user:
     name: "{{ tshark_user_name }}"
-    groups: "{{ pcap_access_group }}, tshark"
+    group: "{{ zed_worker_group }}"
+    groups: "{{ zed_worker_group }}, tshark"
     shell: /bin/bash
     state: present
 - name: set group for dumpcap
@@ -42,7 +43,7 @@
   ansible.builtin.file:
     path: "{{ tshark_buffer_dir }}"
     owner: "{{ tshark_user_name }}"
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0770'
     state: directory
 - name: install rc.local template to start capture on reboot
@@ -52,6 +53,7 @@
     mode: '0755'
     owner: root 
     group: root
+  notify: run rc.local
 - name: set bash shell for cron
   ansible.builtin.cron:
     name: SHELL
@@ -71,7 +73,7 @@
     dest: "{{tshark_watchdog_script}}"
     mode: '0770'
     owner: "{{ tshark_user_name }}" 
-    group: "{{ tshark_user_name }}"
+    group: tshark
 - name: crontab run tshark_watchdog.sh every minute
   ansible.builtin.cron:
     name: tshark_watchdog.sh

@@ -2,8 +2,7 @@
 
 # zed worker user
 zed_worker_user: zed_worker
-pcap_access_group: pcap_access
-zed_users_group: zed_users
+zed_worker_group: zed_worker
 
 # defaults file for zed
 brim_deb: https://github.com/brimdata/brim/releases/download/v0.31.0/Brim-0.31.0.deb

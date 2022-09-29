@@ -6,10 +6,10 @@
     - vars/main.yml
 
   roles:
-  #- geerlingguy.ntp
-  #- tshark-listener
+  - geerlingguy.ntp
+  - tshark-listener
   - zed
-  #- zed-server
+  - zed-server
   - zed-processing
 
   tasks:

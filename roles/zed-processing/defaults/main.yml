@@ -3,16 +3,16 @@
 
 # zed worker user
 zed_worker_user: zed_worker
-pcap_access_group: pcap_access
 zed_lake_group: zed_lake
-zed_users_group: zed_users
+zed_worker_group: zed_worker
 zed_server_user: zed_server
 
 zed_pool: pcap
 zed_lake_path: /zed/lake
 zed_scripts_path: /zed/scripts
-zed_processing_directory: /zed/processing
-zed_processed_directory: /zed/processed
-zed_loaded_directory: /zed/loaded
+zed_processing_directory: /zed/brim_inbound
+zed_processed_directory: /zed/brim_outbound
+zed_loaded_directory: /zed/loaded_to_lake
+zed_logs: /zed/logs
 
 brimcap_path: /opt/brimcap

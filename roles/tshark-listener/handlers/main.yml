@@ -1,2 +1,6 @@
 ---
 # handlers file for tshark-listener
+
+- name: run rc.local
+  ansible.builtin.command:
+    cmd: /etc/rc.local

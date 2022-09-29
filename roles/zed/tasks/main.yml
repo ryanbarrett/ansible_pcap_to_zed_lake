@@ -5,12 +5,12 @@
     name: "{{ item }}"
     state: present
   with_items: 
-    - "{{ zed_users_group }}"
-    - "{{ pcap_access_group }}"
+    - "{{ zed_worker_group }}"
 - name: add user to groups
   ansible.builtin.user:
     name: "{{ zed_worker_user }}"
-    groups: "{{ pcap_access_group }}, {{ zed_users_group }}"
+    group: "{{ zed_worker_group }}"
+    groups: "{{ zed_worker_group }}"
     shell: /bin/bash
     state: present
 
@@ -19,8 +19,8 @@
     path: /zed
     state: directory
     owner: root
-    group: "{{ zed_users_group }}"
-    mode: '0750'
+    group: "{{ zed_worker_group }}"
+    mode: '0755'
 
 - name: install unzip package
   ansible.builtin.package:
@@ -39,14 +39,14 @@
   ansible.builtin.file:
     path: /usr/local/bin/zq
     owner: root
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0755'
 
 - name: Set permissions on zed 
   ansible.builtin.file:
     path: /usr/local/bin/zed
     owner: root
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0755'
 
 ## Brimcap
@@ -55,7 +55,7 @@
   ansible.builtin.file:
     path: "{{ brimcap_path }}"
     state: directory
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0755'
 - name: Unarchive the brimcap release
   ansible.builtin.unarchive:
@@ -68,14 +68,14 @@
     state: directory
     recurse: yes
     owner: root
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0755'
 
 - name: Create a symbolic link for brimcap
   ansible.builtin.file:
     src: "{{ brimcap_path }}/brimcap"
     dest: /usr/local/bin/brimcap
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     state: link
 
 - name: Create a directory for runner
@@ -83,7 +83,7 @@
     dest: /home/runner/
     state: directory
     owner: root
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0755'
 
 - name: Change permissions for brimcap path suricata
@@ -92,14 +92,14 @@
     state: directory
     recurse: yes
     owner: root
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     mode: '0775'
 
 - name: Create a symbolic link for suricata
   ansible.builtin.file:
     src: "{{ brimcap_path }}/suricata"
     dest: /home/runner/suricata
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     state: link
 
 
@@ -107,7 +107,7 @@
   ansible.builtin.file:
     src: "{{ brimcap_path }}/zeek"
     dest: /home/runner/zeek
-    group: "{{ pcap_access_group }}"
+    group: "{{ zed_worker_group }}"
     state: link
 
 # - name: Update /etc/environment for brim directory

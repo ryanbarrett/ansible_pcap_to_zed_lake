@@ -1,16 +1,16 @@
 #!/bin/bash
 # find pcap files in the tshark buffer directory and move them to the zed processing directory.
-echo $(date) "Starting pcap move from {{ tshark_buffer_dir }} to {{ zed_processing_directory }}"
-TEMPFILE=$(mktemp)
-echo "Starting pcap move... $TEMPFILE"
-find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > $TEMPFILE
-for pcap_file in $(cat $TEMPFILE) ; do
-    echo "Processing $pcap_file"
-    mv -v $pcap_file {{ zed_processing_directory }}
-done
+# echo $(date) "Starting pcap move from {{ tshark_buffer_dir }} to {{ zed_processing_directory }}"
+# TEMPFILE=$(mktemp)
+# echo "Starting pcap move... $TEMPFILE"
+# find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > $TEMPFILE
+# for pcap_file in $(cat $TEMPFILE) ; do
+#     echo "Processing $pcap_file"
+#     mv -v $pcap_file {{ zed_processing_directory }}
+# done
 
-rm -vf $TEMPFILE
-echo $(date) "Moved files from {{ tshark_buffer_dir }} to {{ zed_processing_directory }}"
+# rm -vf $TEMPFILE
+# echo $(date) "Moved files from {{ tshark_buffer_dir }} to {{ zed_processing_directory }}"
 
 
 # Process pcap files into zng files with brimcap
