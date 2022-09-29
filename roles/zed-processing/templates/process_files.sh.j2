@@ -31,7 +31,7 @@ echo $(date) "Finished processing pcap files with brimcap"
 # find zng files in zed_processed_directory and import to the lake
 echo $(date) "Starting Zed Processed Files Load to {{ zed_pool }}"
 TEMPFILE=$(mktemp)
-find {{ zed_processing_directory }} -type f -mmin +1 -name "*.zng" > $TEMPFILE
+find {{ zed_processing_directory }} -type f -name "*.zng" > $TEMPFILE
 
 for zng_file in $(cat $TEMPFILE); do
     zed load -use {{ zed_pool }} $zng_file

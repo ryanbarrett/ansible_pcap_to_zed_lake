@@ -7,8 +7,8 @@
 echo $(date) "Starting pcap permissions change in {{ tshark_buffer_dir }}"
 LOOP=1
 TEMPFILE=$(mktemp)
-while [ $LOOP -le  6 ]; do
-    find {{ tshark_buffer_dir }} -type f -mmin +1 -name "*.pcap" > $TEMPFILE
+while [ $LOOP -le  2 ]; do
+    find {{ tshark_buffer_dir }} -type f -mmin +0.6 -name "*.pcap" > $TEMPFILE
     for pcap_file in $(cat $TEMPFILE) ; do
         GROUP=$(stat -c "%G" $pcap_file)
         if [ $GROUP != {{ zed_worker_group }} ]; then
@@ -20,7 +20,7 @@ while [ $LOOP -le  6 ]; do
         fi
         mv -v $pcap_file {{ zed_processing_directory }}
     done
-    sleep 10
+    sleep 30
     LOOP=$((LOOP+1))
 done
 rm -vf $TEMPFILE
