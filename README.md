@@ -16,6 +16,8 @@ Tunnel in with something like:
 
 point your brim lake connection at http://127.0.0.1:9999
 
+![image](https://user-images.githubusercontent.com/121498/193038594-f9a46718-bfbc-4369-8a36-230ea2fae1ac.png)
+
 
 ## Requirements
 Ubuntu 22.04, I'm running in a cloud image on proxmox. *See the Disclaimer below
