@@ -101,6 +101,11 @@
     hour: 0,12
     job: /home/runner/suricata/bin/suricata-update
 
+- name: install package for libnss3
+  ansible.builtin.package:
+    name: libnss3
+    state: present
+
 - name: run the suricata update once
   command: 
     cmd: /home/runner/suricata/bin/suricata-update
